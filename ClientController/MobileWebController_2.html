@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)http://www.albertosarullo.com/demos/accelerometer/ -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=Big5">
+<title>Accelerometer Javascript Test</title>
+<meta name="viewport" content="width=device-width,user-scalable=yes">
+<script src='jquery-1.10.2.min.js'></script>
+<style>
+body {
+  font-family: helvetica, arial, sans serif;
+}
+
+</style>
+</head>
+<body>
+<div id="content">
+<ul>
+  <li>x: <span id="heading"></span></li>
+  <li>y: <span id="pitch"></span></li>
+</ul>
+</div>
+<div>
+  <input type="button" value='submit' id='reflash'>
+</div>
+<script type="text/javascript">
+
+  
+var range = 10;//15;
+var min = -range;
+var max = range;
+var wsUri = "ws://211.78.254.59:3001/wbsc/websocket";
+
+var headingOffset = 0;
+var currentHeading;
+var px = 200;
+var py = 200;
+var upload = 0;
+  
+var websocket;
+testWebSocket();
+setInterval(uploadPosition, 25);
+
+if (window.DeviceMotionEvent != undefined) {
+
+  window.ondeviceorientation = function(e) {
+      var cx = e.alpha - headingOffset;
+      if(cx < 0) cx = cx + 360;
+      
+      cx = (cx > 180)?(cx - 360):cx;
+      if(cx < min) cx = min;
+      if(cx > max) cx = max;
+      cx = (cx - min) / (max - min);
+      cx = 1 - cx;
+
+
+      var cy = e.beta;
+      if(cy < min) cy = min;
+      if(cy > max) cy = max;
+      cy = (cy - min) / (max - min);
+      cy = 1 - cy;
+
+      //document.getElementById("heading").innerHTML = e.alpha - headingOffset;//cx;
+      //websocket.send(cx);
+      //document.getElementById("heading").innerHTML = cx;//Math.round(e.alpha * 10);
+      //document.getElementById("pitch").innerHTML = cy;
+
+      cx = Math.round(cx * 100);
+      cy = Math.round(cy * 100);
+      //if( (Math.abs(cx-px)>2) || (Math.abs(cy-py)>2) ) {
+      if((cx!=px) || (cy!=py)) {
+        document.getElementById("heading").innerHTML = cx;
+        document.getElementById("pitch").innerHTML = cy;
+        //websocket.send(cx + ' ' + cy);
+        px = cx;
+        py = cy;
+        upload = 1;
+      }
+      
+      currentHeading = e.alpha;
+  }
+
+
+  /**
+       * Connect Function 
+  */
+    function testWebSocket() {
+        websocket = new WebSocket(wsUri);
+        websocket.onopen = function (evt) {
+          console.log('open websocket success!!')
+          //onOpen(evt)
+        };
+        websocket.onclose = function (evt) {
+          console.log('close websocket success!!')
+        //onClose(evt)
+        };
+        websocket.onmessage = function (evt) {
+          console.log('get websocket message!!')
+          //onMessage(evt)
+        };
+        websocket.onerror = function (evt) {
+          console.log('websocket error!!')
+        //onError(evt)
+        };
+  }
+
+  function uploadPosition( )
+  {
+    if(upload) {
+      websocket.send(px + ' ' + py);
+      upload = 0;
+    }
+    
+  }
+}
+
+$('#reflash').on('click',function(e){ 
+  headingOffset = currentHeading;
+}) 
+
+</script>
+</body></html>
